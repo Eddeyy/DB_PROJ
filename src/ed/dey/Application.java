@@ -1,11 +1,13 @@
 package ed.dey;
 import java.lang.invoke.ConstantCallSite;
 import java.sql.*;
+import java.text.ParseException;
 import java.util.*;
 
 public class Application {
     public boolean returning = true;
     public int columnAmount;
+    LoginManager logman = new LoginManager();
     public static ArrayList<String> columnName = new ArrayList<>();
     public static ArrayList<String>  dataType = new ArrayList<>();
     public static void printSQLException(SQLException ex) {
@@ -25,6 +27,20 @@ public class Application {
             }
         }
     }
+
+    public void run() {
+            while(true){
+                try {
+                    System.out.println();
+                    while (logman.login()) {
+                            while (displayMenu(logman.con));
+                    }
+                } catch (ParseException | SQLException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+    }
+
     public static void findColumns (Connection con, String tableName) throws SQLException{
         String query =
                 "SELECT column_name, data_type " +
@@ -48,6 +64,7 @@ public class Application {
                 printSQLException(e);
             }
     }
+
 
 
     public static void viewTable(Connection con, String tableName) throws SQLException {
@@ -76,108 +93,38 @@ public class Application {
         }
     }
 
-    public static boolean checkingName(Connection con, String name, String surname, int id) throws SQLException {
-        String query =
-                "SELECT " +
-                "dweller_ID, name, surname " +
-                "FROM V_OVERSEER.DWELLERS" +
-                " WHERE dweller_ID = " + id + "";
-
-        try (Statement stmt = con.createStatement()) {
-            ResultSet rs = stmt.executeQuery(query);
-                rs.next();
-                int idCheck = rs.getInt("dweller_ID");
-                String nameCheck = rs.getString("name");
-                String surnameCheck = rs.getString("surname");
-                System.out.println(idCheck + ", " + nameCheck + ", " + surnameCheck);
-                System.out.println(id + ", " + name + ", " + surname);
-                if(idCheck == id && nameCheck.equals(name) && surnameCheck.equals(surname)){
-                    System.out.println("Brawo debilu");
-                    return true;
-                }
-                else {
-                    System.out.println("Jestes chujem");
-                    return false;
-                }
 
 
-        } catch (SQLException e) {
-            System.out.println("Oops, chuju");
-            printSQLException(e);
-        }
-        return false;
-    }
-    public boolean login(Connection con) throws SQLException {
-        Scanner sc= new Scanner(System.in);
-        System.out.println("Enter name: ");
-        String name = sc.nextLine();
-
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
-
-        System.out.println("Enter surname: ");
-        String surname = sc.nextLine();
-
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
-
-        System.out.println("Enter ID: ");
-        int id = sc.nextInt();
-
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
-        try {
-            if(checkingName(con, name, surname, id)) return true;
-            else{
-                System.out.println("Try logging again or leave you cunt ");
-                System.out.println("1. Login again");
-                System.out.println("2. Exit");
-                int ask = sc.nextInt();
-                switch (ask){
-                    case 1:
-                        returning = false;
-                        return true;
-                    case 2:
-                        return false;
-                    default:
-                        System.out.println("Try logging again or leave you cunt ");
-                        return true;
-                }
-
-            }
-        }
-        catch (SQLException e) {
-             System.out.println("Oops, error");
-             return false;
-        }
-
-    }
 
     public boolean displayMenu(Connection con){
-        int displayCheck;
+        String displayCheck;
         System.out.println("1. Display Table");
         System.out.println("2. Display View");
         System.out.println("3. Other activity");
-        System.out.println("0. Exit to login");
-        System.out.println("99. Exit the App");
-        System.out.println("Input number next to the activity that you want to do:");
+        System.out.println("(Type 'Logout' or 'Quit' to do accordingly)\n");
+        System.out.println("Type the number of the activity that you want to do:");
         Scanner sc = new Scanner(System.in);
-        displayCheck = sc.nextInt();
+        displayCheck = sc.nextLine();
+        displayCheck= displayCheck.toUpperCase();
         System.out.print("\033[H\033[2J");
         System.out.flush();
         switch (displayCheck) {
-            case 1:
+            case "1":
                 //display table
                 System.out.println("Display Table");
+
+                String tabName = sc.nextLine();
+                //tabName = tabName.toUpperCase();
+
+                DBTablePrinter.printTable(con, tabName);
                 break;
-            case 2:
+            case "2":
                 //display view
                 System.out.println("Display view");
                 break;
-            case 3:
+            case "3":
                 //other activity
                 System.out.println("Other activity");
-                sc.nextLine();
                 System.out.println("Enter table: ");
                 String tableName = sc.nextLine();
 
@@ -186,16 +133,16 @@ public class Application {
                 } catch (SQLException e) {
                     printSQLException(e);
                 }
+
                 break;
-            case 0:
+            case "LOGOUT":
                 System.out.println("Exit to logging");         //exit to login
                 return false;
-            case 99:
-                System.out.println("Exit the base");
-                returning = true;
-                return false;
+            case "QUIT":
+                System.out.println("Exiting the base");
+                exit_success();
             default:
-                System.out.println("Bad number you idiot");
+                System.err.println("I can't understand you, please retry");
                 System.out.print("\033[H\033[2J");
                 System.out.flush();
                 break;
@@ -203,5 +150,10 @@ public class Application {
         return true;
     }
 
+
+    public static void exit_success(){
+        System.out.println("\nExiting Vault's database\n\n\t Have a splendid day ;)");
+        System.exit(0);
+    }
 
 }
