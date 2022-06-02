@@ -5,8 +5,8 @@ import java.text.ParseException;
 import java.util.*;
 
 public class Application {
+    private static int columnAmount;
     public boolean returning = true;
-    public int columnAmount;
     LoginManager logman = new LoginManager();
     Scanner sc = new Scanner(System.in);
     public static ArrayList<String> columnName = new ArrayList<>();
@@ -41,15 +41,71 @@ public class Application {
                 }
             }
     }
+    public void insertRow(String tableName) throws SQLException {
+        findColumns(tableName);
+        String query = "INSERT INTO " + tableName + " (";
+        for(int i = 0; i < columnAmount; i++){
+            if(!columnName.get(i).equals("VER_STATUS")) {
+                if (i != 0)
+                    query = query.concat(", " + columnName.get(i));
+                else
+                    query = query.concat(columnName.get(i));
+            }
+            else
+                break;
+        }
+        query +=") VALUES (";
+        for(int i = 0; i < columnAmount; i++){
+            if(!columnName.get(i).equals("VER_STATUS")) {
+                if (i != 0){
+                    System.out.println("Insert " + columnName.get(i) + ":");
+                    Scanner sc = new Scanner(System.in);
+                    String columnValue = sc.nextLine();
+                    if(dataType.get(i).contains("VARCHAR") ) {
+                        query = query.concat(", '" + columnValue + "'");
+                    }
+                    else {
+                        query = query.concat(", " + columnValue);
+                    }
+                }
+                else {
+                    System.out.println("Insert " + columnName.get(i) + ":");
+                    Scanner sc = new Scanner(System.in);
+                    String columnValue = sc.nextLine();
+                    if(dataType.get(i).contains("VARCHAR") ) {
+                        query = query.concat("'" + columnValue + "'");
+                    }
+                    else {
+                        query = query.concat(columnValue);
+                    }
+                }
 
-    public static void findColumns (Connection con, String tableName) throws SQLException{
+
+            }
+            else break;
+        }
+        query +=")";
+
+        try (Statement stmt = logman.con.createStatement()) {
+            stmt.executeQuery(query);
+        }
+        catch(SQLException e){
+            printSQLException(e);
+        }
+
+    }
+
+    public void findColumns (String tableName) throws SQLException{
+        columnName.clear();
+        dataType.clear();
         String query =
                 "SELECT column_name, data_type " +
-                        "FROM USER_TAB_COLUMNS " +
-                        "WHERE table_name = '" + tableName.toUpperCase() + "'";
-        int columnAmount = 0;
-        try (Statement stmt = con.createStatement()) {
+                        "FROM ALL_TAB_COLUMNS " +
+                        "WHERE table_name LIKE '" + tableName.toUpperCase() + "'";
+        columnAmount = 0;
+        try (Statement stmt = logman.con.createStatement()) {
             ResultSet rs = stmt.executeQuery(query);
+            rs.next();
             while (rs.next()){
                 columnName.add(rs.getString("Column_Name".toUpperCase()));
                 dataType.add(rs.getString("Data_Type".toUpperCase()));
@@ -65,8 +121,6 @@ public class Application {
                 printSQLException(e);
             }
     }
-
-
 
     public static void viewTable(Connection con, String tableName) throws SQLException {
         Statement stmt = null;
@@ -142,6 +196,7 @@ public class Application {
         }
         return true;
     }
+
     public boolean displayGuardTableMenu(Connection con) {
         String displayCheck;
         System.out.println("1. ARMORY");
@@ -348,24 +403,23 @@ public class Application {
         return true;
     }
 
-
-    public boolean displayMenu(Connection con){
+    public boolean displayMenu(Connection con) throws SQLException {
         String displayCheck;
         System.out.println("1. Complaints menu");
         System.out.println("2. Display View");
-        System.out.println("3. Other activity");
+        System.out.println("3. Insert");
         System.out.println("(Type 'Logout' or 'Quit' to do accordingly)\n");
         System.out.println("Type the number of the activity that you want to do:");
         Scanner sc = new Scanner(System.in);
         displayCheck = sc.nextLine();
-        displayCheck= displayCheck.toUpperCase();
+        displayCheck = displayCheck.toUpperCase();
         clear_console();
         switch (displayCheck) {
             case "1":
                 compMenu();
                 break;
             case "2":
-                switch (logman.username){
+                switch (logman.username) {
                     case "DWELLER":
                         displayDwellerTableMenu(con);
                         break;
@@ -381,21 +435,22 @@ public class Application {
                     case "MEDIC":
                         displayMedicTableMenu(con);
                         break;
+                    case "V_OVERSEER":
+                        displayManagerTableMenu(con);
+                        break;
                     default:
                         break;
                 }
                 break;
             case "3":
-                //other activity
-                System.out.println("Other activity");
-                System.out.println("Enter table: ");
+                insertMenu();
+                break;
+            case "4":
+                System.out.println("1. Table");
+                sc = new Scanner(System.in);
                 String tableName = sc.nextLine();
-
-                try {
-                    findColumns(con,tableName);
-                } catch (SQLException e) {
-                    printSQLException(e);
-                }
+                tableName = tableName.toUpperCase();
+                findColumns(tableName);
 
                 break;
             case "LOGOUT":
@@ -403,27 +458,87 @@ public class Application {
             case "QUIT":
                 exit_success();
             default:
-                System.err.println("I can't understand you, please retry");
-                System.out.print("\033[H\033[2J");
-                System.out.flush();
-                break;
+                 System.err.println("I can't understand you, please retry");
+                 System.out.print("\033[H\033[2J");
+                 System.out.flush();
+                 break;
         }
-        return true;
-    }
-    public void insertDwellerMenu() {
-        System.out.println("1. ITEMS");
-        System.out.println("0. Exit to Menu");
-    }
-    public void insertEngineerMenu() {
-        System.out.println("1. WATER_PUMPS");
-        System.out.println("2. GENERATORS");
-        System.out.println("3. SECTORS");
+            return true;
     }
 
-    public void insertMedicMenu() {
-        System.out.println("1. BEDS");
+    public void insertDwellerMenu(Connection con) throws SQLException {
+        System.out.println("1. ITEMS");
+        System.out.println("0. Exit to Menu");
+        String insertCheck;
+        Scanner sc = new Scanner(System.in);
+        insertCheck = sc.nextLine();
+        insertCheck = insertCheck.toUpperCase();
+        switch (insertCheck){
+            case "1":
+                insertRow("ITEMS");
+                break;
+            case "0":
+                break;
+            default:
+                break;
+        }
     }
-    public void insertManagerMenu() {
+    public void insertEngineerMenu(Connection con) throws SQLException {
+        System.out.println("1. ITEMS");
+        System.out.println("2. WATER_PUMPS");
+        System.out.println("3. GENERATORS");
+        System.out.println("4. SECTORS");
+        System.out.println("0. Exit");
+        String insertCheck;
+        Scanner sc = new Scanner(System.in);
+        insertCheck = sc.nextLine();
+        insertCheck = insertCheck.toUpperCase();
+        switch (insertCheck) {
+            case "1":
+                insertRow("ITEMS");
+                break;
+            case "2":
+                insertRow("WATER_PUMPS");
+                break;
+            case "3":
+                insertRow("GENERATORS");
+                break;
+            case "4":
+                insertRow("SECTORS");
+
+                break;
+            case "0":
+                break;
+            default:
+                break;
+        }
+    }
+    public void insertGuardMenu(Connection con) throws SQLException {
+        insertDwellerMenu(con);
+    }
+    public void insertMedicMenu(Connection con) throws SQLException {
+        System.out.println("1. ITEMS");
+        System.out.println("2. BEDS");
+
+        System.out.println("0. Exit");
+            String insertCheck;
+            Scanner sc = new Scanner(System.in);
+            insertCheck = sc.nextLine();
+            insertCheck = insertCheck.toUpperCase();
+            switch (insertCheck){
+                case "1":
+                insertRow("ITEMS");
+                break;
+                case "2":
+                    insertRow("BEDS");
+                    break;
+                case "0":
+                    break;
+                default:
+                    break;
+            }
+    }
+    public void insertManagerMenu(Connection con) throws SQLException {
         System.out.println("1. BEDS");
         System.out.println("2. DWELLERS");
         System.out.println("3. EXP_MEMBER_DATA");
@@ -434,9 +549,81 @@ public class Application {
         System.out.println("8. ROOMS");
         System.out.println("9. SECTORS");
         System.out.println("10. WATER_PUMPS");
-    }
-    public void insertMenu(){
+        System.out.println("0. Exit");
+        String insertCheck;
+        Scanner sc = new Scanner(System.in);
+        insertCheck = sc.nextLine();
+        insertCheck = insertCheck.toUpperCase();
+        switch (insertCheck){
+            case "1":
+                insertRow("BEDS");
 
+                break;
+            case "2":
+                insertRow("DWELLERS");
+
+                break;
+            case "3":
+                insertRow("EXP_MEMBER_DATA");
+
+                break;
+            case "4":
+                insertRow("EXPEDITION_LOGS");
+
+                break;
+            case "5":
+                insertRow("GENERATORS");
+
+                break;
+            case "6":
+                insertRow("ITEMS");
+
+                break;
+            case "7":
+                insertRow("JOBS");
+
+                break;
+            case "8":
+                insertRow("ROOMS");
+
+                break;
+            case "9":
+                insertRow("SECTORS");
+
+                break;
+            case "10":
+                insertRow("WATER_PUMPS");
+                break;
+            case "0":
+                break;
+            default:
+                break;
+        }
+
+    }
+    public void insertMenu() throws SQLException {
+        switch (logman.username) {
+            case "DWELLER":
+                insertDwellerMenu(logman.con);
+                break;
+            case "ENGINEER":
+                insertEngineerMenu(logman.con);
+                break;
+            case "GUARD":
+                System.out.println("You can't insert anything");
+                break;
+            case "MANAGER":
+                insertManagerMenu(logman.con);
+                break;
+            case "MEDIC":
+                insertMedicMenu(logman.con);
+                break;
+            case "V_OVERSEER":
+                insertManagerMenu(logman.con);
+                break;
+            default:
+                break;
+        }
     }
 
     boolean compMenu(){
