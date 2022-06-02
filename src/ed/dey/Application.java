@@ -408,6 +408,8 @@ public class Application {
         System.out.println("1. Complaints menu");
         System.out.println("2. Display View");
         System.out.println("3. Insert");
+        if(logman.username.equals("MANAGER") || logman.username.equals("V_OVERSEER") )
+            System.out.println("5. Verification menu");
         System.out.println("(Type 'Logout' or 'Quit' to do accordingly)\n");
         System.out.println("Type the number of the activity that you want to do:");
         Scanner sc = new Scanner(System.in);
@@ -453,6 +455,11 @@ public class Application {
                 findColumns(tableName);
 
                 break;
+            case "5":
+                if(logman.username.equals("MANAGER") || logman.username.equals("V_OVERSEER") ) {
+                    System.out.println("5. verification menu");
+                    verScreen();
+                }
             case "LOGOUT":
                 return false;
             case "QUIT":
@@ -784,12 +791,15 @@ public class Application {
             command = sc.nextLine();
             command = command.toUpperCase();
 
+
             if (command.contains("EXIT")) {
                 return false;
             }
 
-            if(command.equals("HELP"))
+            if(command.equals("HELP")) {
                 System.out.println(ver_menu);
+                continue;
+            }
 
             if(command.isEmpty()){
                 System.out.println("Please type something");
@@ -799,7 +809,7 @@ public class Application {
             String tablename;
             int id;
 
-            parse = command.split(" ", 2);
+            parse = command.split(" ", 3);
 
             if(parse[0].equals("CHECK")){
                 if(parse.length == 2) {
@@ -822,7 +832,7 @@ public class Application {
                         default:
                             continue;
                     }
-                    query = "SELECT FROM " + tablename + " WHERE VER_STATUS IS NOT 'approved'";
+                    query = "SELECT * FROM " + tablename + " WHERE VER_STATUS != 'approved'";
                 }
                 else {
                     System.out.println("Choose a data to check.");
@@ -832,10 +842,10 @@ public class Application {
 
             if(command.equals("VERIFY ALL"))
             {
-                query = "UPDATE BEDS, COMPLAINTS, GENERATORS, ITEMS, PUMPS SET VER_STATUS = 'approved' WHERE VER_STATUS IS NOT 'approved'";
+                query = "UPDATE BEDS, COMPLAINTS, GENERATORS, ITEMS, PUMPS SET VER_STATUS = 'approved' WHERE VER_STATUS != 'approved'";
             }
 
-            if(parse[0].equals("VERIFY") && parse.length > 2){
+            if((parse[0].equals("VERIFY") || parse[0].equals("DENY")) && parse.length > 2){
                     switch(parse[1]) {
                         case"BEDS":
                             tablename = "BEDS";
@@ -862,16 +872,41 @@ public class Application {
                     System.out.println("Please provide viable id number.");
                     continue;
                 }
-                    query = "EXECUTE VERIFICATION("+ tablename +" ," + id + " , 'approved')";
-        }
-        try(Statement stmt = logman.con.createStatement()){
-            ResultSet rs = stmt.executeQuery(query);
-            DBTablePrinter.printResultSet(rs);
 
-            System.out.println("SUCCESS!");
-        }catch(SQLException e){
-            e.printStackTrace();
-        }
+                try {
+                    Statement stmt = logman.con.createStatement();
+                    CallableStatement cStmt = logman.con.prepareCall("{CALL V_OVERSEER.VERIFICATION(?, ?, ?)}");
+                    tablename = "'" + tablename + "'";
+                    cStmt.setString(1, tablename);
+                    cStmt.setString(2, Integer.toString(id));
+                    if(parse[0].equals("VERIFY"))
+                        cStmt.setString(3, "'approved'");
+                    else
+                        cStmt.setString(3, "'denied'");
+
+                    cStmt.execute();
+                    query = "COMMIT";
+                    stmt.execute(query);
+                    System.out.println("SUCCESS!");
+
+                    continue;
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }finally {
+                }
+            }
+            if(!query.equals("NULL"))
+                try(Statement stmt = logman.con.createStatement()){
+                    ResultSet rs = stmt.executeQuery(query);
+                    DBTablePrinter.printResultSet(rs);
+                    query = "COMMIT";
+                    stmt.execute(query);
+                    System.out.println("SUCCESS!");
+                }catch(SQLException e){
+                    e.printStackTrace();
+                }
+
+            query = "NULL";
     }}
 
     void printQueryResult(String query){
