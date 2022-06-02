@@ -8,6 +8,7 @@ public class Application {
     public boolean returning = true;
     public int columnAmount;
     LoginManager logman = new LoginManager();
+    Scanner sc = new Scanner(System.in);
     public static ArrayList<String> columnName = new ArrayList<>();
     public static ArrayList<String>  dataType = new ArrayList<>();
     public static void printSQLException(SQLException ex) {
@@ -98,7 +99,7 @@ public class Application {
 
     public boolean displayMenu(Connection con){
         String displayCheck;
-        System.out.println("1. Display Table");
+        System.out.println("1. Complaints menu");
         System.out.println("2. Display View");
         System.out.println("3. Other activity");
         System.out.println("(Type 'Logout' or 'Quit' to do accordingly)\n");
@@ -110,13 +111,7 @@ public class Application {
         System.out.flush();
         switch (displayCheck) {
             case "1":
-                //display table
-                System.out.println("Display Table");
-
-                String tabName = sc.nextLine();
-                //tabName = tabName.toUpperCase();
-
-                DBTablePrinter.printTable(con, tabName);
+                compMenu();
                 break;
             case "2":
                 //display view
@@ -150,9 +145,101 @@ public class Application {
         return true;
     }
 
+    boolean compMenu(){
+        String comp_menu =
+                """
+                        =======[VAULT COMPLAINTS]=======
+                        Type "check" or "check my", to list complaints.
+                        Type "add" to proceed to complaint add screen.
+                        Type "exit" to return to main menu.
+
+                        Type "help" anytime to print this message again
+                        """;
+
+        String command;
+        String query;
+
+        System.out.println(comp_menu);
+        while(true) {
+
+            System.out.print("COMPLAINTS>");
+            command = sc.nextLine();
+            command = command.toUpperCase();
+
+            if (command.contains("EXIT")) {
+                return false;
+            }
+
+            if(command.equals("HELP"))
+                System.out.println(comp_menu);
+
+            if(command.isEmpty()){
+                System.out.println("Please type something");
+                continue;
+            }
+
+            String where = "";
+            String tail = "";
+
+            if(command.contains("CHECK")){
+                if(command.equals("CHECK MY")) {
+                    where = " WHERE";
+                    tail = " COMP_AUTHOR = " + logman.u_id;
+                }
+
+                System.out.println("\n1.All\n2.Approved\n3.Not approved\n4.Pending\n0.Exit");
+                String op = sc.nextLine();
+                    switch(op) {
+                        case "1":
+                            query = "SELECT COMP_ID AS \"ID\", COMP_AUTHOR AS \"AUTHOR\", COMP_SUBJ AS \"SUBJECT\", DESCR AS \"DESCRIPTION\" FROM " +
+                            " COMPLAINTS"+ where + tail;
+                            break;
+                        case "2":
+                            query = "SELECT COMP_ID AS \"ID\", COMP_AUTHOR AS \"AUTHOR\", COMP_SUBJ AS \"SUBJECT\", DESCR AS \"DESCRIPTION\" FROM " +
+                                    " V_OVERSEER.APPROVED_COMPLAINTS"+ where + tail;
+                            break;
+                        case "3":
+                            query = "SELECT COMP_ID AS \"ID\", COMP_AUTHOR AS \"AUTHOR\", COMP_SUBJ AS \"SUBJECT\", DESCR AS \"DESCRIPTION\" FROM " +
+                                    " NOT_APPROVED_COMPLAINTS"+ where + tail;
+                            break;
+                        case "4":
+                            where = " WHERE";
+                            if(tail!="")
+                                tail += " AND";
+                            query = "SELECT COMP_ID AS \"ID\", COMP_AUTHOR AS \"AUTHOR\", COMP_SUBJ AS \"SUBJECT\", DESCR AS \"DESCRIPTION\" FROM " +
+                                    " COMPLAINTS"+ where + tail + " VER_STATUS = 'pending'";
+                            break;
+                        case "0":
+                            continue;
+                        default:
+                            System.out.println("\nNothing selected");
+                            continue;
+                    }
+                printQueryResult(query);
+                }
+            }
+        }
+
+
+    void addComp(String auth, String subj){
+
+    }
+
+    void printQueryResult(String query){
+        try{
+            Statement stmt = logman.con.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+            DBTablePrinter.printResultSet(rs);
+        }catch(SQLException e)
+        {
+            printSQLException(e);
+        }
+    }
 
     public static void exit_success(){
         System.out.println("\nExiting Vault's database\n\n\t Have a splendid day ;)");
+        Scanner sc = new Scanner(System.in);
+        sc.nextLine();
         System.exit(0);
     }
 
