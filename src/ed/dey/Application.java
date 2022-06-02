@@ -94,7 +94,259 @@ public class Application {
         }
     }
 
+    public boolean displayEngineerTableMenu(Connection con) {
+        String displayCheck;
+        System.out.println("1. WATER_PUMPS");
+        System.out.println("2. GENERATORS");
+        System.out.println("3. SECTORS");
+        System.out.println("4. DAMAGED_GENERATORS");
+        System.out.println("5. DAMAGED_PUMPS");
+        System.out.println("6. SECTOR_STATUS");
+        System.out.println("7. TOOLS");
+        System.out.println("8. BEDS");
+        System.out.println("0. Exit to menu");
+        Scanner sc = new Scanner(System.in);
+        displayCheck = sc.nextLine();
+        displayCheck = displayCheck.toUpperCase();
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+        switch (displayCheck) {
+            case "1":
+                DBTablePrinter.printTable(con, "WATER_PUMPS");
+                break;
+            case "2":
+                DBTablePrinter.printTable(con, "GENERATORS");
+                break;
+            case "3":
+                DBTablePrinter.printTable(con, "SECTORS");
+                break;
+            case "4":
+                DBTablePrinter.printTable(con, "DAMAGED_GENERATORS");
+                break;
+            case "5":
+                DBTablePrinter.printTable(con, "DAMAGED_PUMPS");
+                break;
+            case "6":
+                DBTablePrinter.printTable(con, "SECTOR_STATUS");
+                break;
+            case "7":
+                DBTablePrinter.printTable(con, "TOOLS");
+                break;
+            case "8":
+                DBTablePrinter.printTable(con, "BEDS");
+                break;
+            case"0":
+                return true;
+            default:
+                return false;
+        }
+        return true;
+    }
+    public boolean displayGuardTableMenu(Connection con) {
+        String displayCheck;
+        System.out.println("1. ARMORY");
+        System.out.println("2. ITEMS");
+        System.out.println("3. EXPEDITION_LOGS");
+        System.out.println("4. EXP_MEMBER_DATA");
+        System.out.println("0. Exit to menu");
+        Scanner sc = new Scanner(System.in);
+        displayCheck = sc.nextLine();
+        displayCheck = displayCheck.toUpperCase();
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+        switch (displayCheck) {
+            case "1":
+                DBTablePrinter.printTable(con, "ARMORY");
+                break;
+            case "2":
+                DBTablePrinter.printTable(con, "ITEMS");
+                break;
+            case "3":
+                DBTablePrinter.printTable(con, "EXPEDITION_LOGS");
+                break;
+            case "4":
+                DBTablePrinter.printTable(con, "EXP_MEMBER_DATA");
+                break;
+            case"0":
+                return true;
+            default:
+                return false;
+        }
+        return true;
+    }
 
+    public boolean displayMedicTableMenu(Connection con) {
+        String displayCheck;
+        System.out.println("1. MEDICAL");
+        System.out.println("2. HOSPITAL");
+        System.out.println("0. Exit to menu");
+        Scanner sc = new Scanner(System.in);
+        displayCheck = sc.nextLine();
+        displayCheck = displayCheck.toUpperCase();
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+        switch (displayCheck) {
+            case "1":
+                DBTablePrinter.printTable(con, "MEDICAL");
+                break;
+            case "2":
+                DBTablePrinter.printTable(con, "HOSPITAL");
+                break;
+            case"0":
+                return true;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+    public boolean displayDwellerTableMenu(Connection con) {
+        String displayCheck;
+        System.out.println("1. COMPLAINTS");
+        System.out.println("2. ITEMS");
+        System.out.println("3. JOBS");
+        System.out.println("4. MISSING");
+        System.out.println("5. EMPLOYED");
+        System.out.println("6. EXPLORERS");
+        System.out.println("7. ROOMS_PLACEMENT");
+        System.out.println("8. LOGIN_DWELLERS_LIST");
+        System.out.println("0. Exit to menu");
+        Scanner sc = new Scanner(System.in);
+        displayCheck = sc.nextLine();
+        displayCheck = displayCheck.toUpperCase();
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+        switch (displayCheck) {
+            case "1":
+                DBTablePrinter.printTable(con, "COMPLAINTS");
+                break;
+            case "2":
+
+                System.out.println("Choose which type of items you want to display:");
+                System.out.println("1. ALL ITEMS");
+                System.out.println("2. FOOD_ITEMS");
+                System.out.println("3. AVAILABLE_ITEMS");
+                String foodDisplay = sc.nextLine();
+                switch (foodDisplay) {
+                    case "1":
+                        DBTablePrinter.printTable(con, "ITEMS");
+                        break;
+                    case "2":
+                        DBTablePrinter.printTable(con, "FOOD_ITEMS");
+                        break;
+                    case "3":
+                        DBTablePrinter.printTable(con, "AVAILABLE_ITEMS");
+                        break;
+                    default:
+                        return false;
+                }
+                break;
+            case "3":
+                DBTablePrinter.printTable(con, "JOBS");
+                break;
+            case "4":
+                DBTablePrinter.printTable(con, "MISSING");
+                break;
+            case "5":
+                DBTablePrinter.printTable(con, "EMPLOYED");
+                break;
+            case "6":
+                DBTablePrinter.printTable(con, "EXPLORERS");
+                break;
+            case "7":
+                DBTablePrinter.printTable(con, "ROOMS_PLACEMENT");
+                break;
+            case "8":
+                DBTablePrinter.printTable(con, "LOGIN_DWELLERS_LIST");
+                break;
+            case"0":
+                return true;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+    public boolean displayManagerTableMenu(Connection con) {
+        String displayCheck;
+        System.out.println("1. BEDS");
+        System.out.println("2. DWELLERS");
+        System.out.println("3. EXP_MEMBER_DATA");
+        System.out.println("4. EXPEDITION_LOGS");
+        System.out.println("5. GENERATORS");
+        System.out.println("6. ITEMS");
+        System.out.println("7. JOBS");
+        System.out.println("8. ROOMS");
+        System.out.println("9. SECTORS");
+        System.out.println("10. WATER_PUMPS");
+        System.out.println("11. COMPLAINTS");
+        System.out.println("12. E_DWLR_STATUS");
+        System.out.println("13. E_EXP_STATUS");
+        System.out.println("14. E_GEN_STATUS");
+        System.out.println("15. E_VER_STATUS");
+        System.out.println("16. LIVING_QUARTERS");
+        System.out.println("0. Exit to menu");
+        Scanner sc = new Scanner(System.in);
+        displayCheck = sc.nextLine();
+        displayCheck = displayCheck.toUpperCase();
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+        switch (displayCheck) {
+            case "1":
+                DBTablePrinter.printTable(con, "BEDS");
+                break;
+            case "2":
+                DBTablePrinter.printTable(con, "DWELLERS");
+                break;
+            case "3":
+                DBTablePrinter.printTable(con, "EXP_MEMBER_DATA");
+                break;
+            case "4":
+                DBTablePrinter.printTable(con, "EXPEDITION_LOGS");
+                break;
+            case "5":
+                DBTablePrinter.printTable(con, "GENERATORS");
+                break;
+            case "6":
+                DBTablePrinter.printTable(con, "ITEMS");
+                break;
+            case "7":
+                DBTablePrinter.printTable(con, "JOBS");
+                break;
+            case "8":
+                DBTablePrinter.printTable(con, "ROOMS");
+                break;
+            case "9":
+                DBTablePrinter.printTable(con, "SECTORS");
+                break;
+            case "10":
+                DBTablePrinter.printTable(con, "WATER_PUMPS");
+                break;
+            case "11":
+                DBTablePrinter.printTable(con, "COMPLAINTS");
+                break;
+            case "12":
+                DBTablePrinter.printTable(con, "E_DWLR_STATUS");
+                break;
+            case "13":
+                DBTablePrinter.printTable(con, "E_EXP_STATUS");
+                break;
+            case "14":
+                DBTablePrinter.printTable(con, "E_GEN_STATUS");
+                break;
+            case "15":
+                DBTablePrinter.printTable(con, "E_VER_STATUS");
+                break;
+            case "16":
+                DBTablePrinter.printTable(con, "LIVING_QUARTERS");
+                break;
+            case"0":
+                return true;
+            default:
+                return false;
+        }
+        return true;
+    }
 
 
     public boolean displayMenu(Connection con){
@@ -113,8 +365,25 @@ public class Application {
                 compMenu();
                 break;
             case "2":
-                //display view
-                System.out.println("Display view");
+                switch (logman.username){
+                    case "DWELLER":
+                        displayDwellerTableMenu(con);
+                        break;
+                    case "ENGINEER":
+                        displayEngineerTableMenu(con);
+                        break;
+                    case "GUARD":
+                        displayGuardTableMenu(con);
+                        break;
+                    case "MANAGER":
+                        displayManagerTableMenu(con);
+                        break;
+                    case "MEDIC":
+                        displayMedicTableMenu(con);
+                        break;
+                    default:
+                        break;
+                }
                 break;
             case "3":
                 //other activity
@@ -141,20 +410,48 @@ public class Application {
         }
         return true;
     }
+    public void insertDwellerMenu() {
+        System.out.println("1. ITEMS");
+        System.out.println("0. Exit to Menu");
+    }
+    public void insertEngineerMenu() {
+        System.out.println("1. WATER_PUMPS");
+        System.out.println("2. GENERATORS");
+        System.out.println("3. SECTORS");
+    }
+
+    public void insertMedicMenu() {
+        System.out.println("1. BEDS");
+    }
+    public void insertManagerMenu() {
+        System.out.println("1. BEDS");
+        System.out.println("2. DWELLERS");
+        System.out.println("3. EXP_MEMBER_DATA");
+        System.out.println("4. EXPEDITION_LOGS");
+        System.out.println("5. GENERATORS");
+        System.out.println("6. ITEMS");
+        System.out.println("7. JOBS");
+        System.out.println("8. ROOMS");
+        System.out.println("9. SECTORS");
+        System.out.println("10. WATER_PUMPS");
+    }
+    public void insertMenu(){
+
+    }
 
     boolean compMenu(){
 
         clear_console();
 
         String comp_menu =
-                """
-                        =======[VAULT COMPLAINTS]=======
-                        Type "check" or "check my", to list complaints.
-                        Type "add" to proceed to complaint add screen.
-                        Type "exit" to return to main menu.
 
-                        Type "help" anytime to print this message again
-                        """;
+                        "=======[VAULT COMPLAINTS]======= \n" +
+                        "Type 'check' or 'check my', to list complaints. \n" +
+                        "Type 'add' to proceed to complaint add screen. \n" +
+                        "Type 'exit' to return to main menu.\n" +
+                        "                                            \n" +
+                        "Type 'help' anytime to print this message again \n"
+                        ;
 
         String command;
         String query;
