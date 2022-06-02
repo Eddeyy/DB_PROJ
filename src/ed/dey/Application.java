@@ -107,8 +107,7 @@ public class Application {
         Scanner sc = new Scanner(System.in);
         displayCheck = sc.nextLine();
         displayCheck= displayCheck.toUpperCase();
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
+        clear_console();
         switch (displayCheck) {
             case "1":
                 compMenu();
@@ -131,10 +130,8 @@ public class Application {
 
                 break;
             case "LOGOUT":
-                System.out.println("Exit to logging");         //exit to login
                 return false;
             case "QUIT":
-                System.out.println("Exiting the base");
                 exit_success();
             default:
                 System.err.println("I can't understand you, please retry");
@@ -146,6 +143,9 @@ public class Application {
     }
 
     boolean compMenu(){
+
+        clear_console();
+
         String comp_menu =
                 """
                         =======[VAULT COMPLAINTS]=======
@@ -215,14 +215,66 @@ public class Application {
                             System.out.println("\nNothing selected");
                             continue;
                     }
-                printQueryResult(query);
+                try{
+                    Statement stmt = logman.con.createStatement();
+                    ResultSet rs = stmt.executeQuery(query);
+                            DBTablePrinter.printResultSet(rs, 128);
+                }catch(SQLException e)
+                {
+                    e.printStackTrace();
                 }
+                }
+                if(command.equals("ADD"))
+                {
+                    String subj;
+                    StringJoiner desc = new StringJoiner(" ");
+                    String buff = "";
+
+                    System.out.print("ENTER COMPLAINT SUBJECT>");
+                    subj = sc.nextLine();
+
+                    System.out.print("ENTER COMPLAINT DESCRIPTION (type :q to commit)>");
+
+                    while(!Objects.equals(buff = sc.next(), ":q")){
+                        desc.add(buff);
+                    }
+
+                    String decision = "";
+                    System.out.println("SUBJECT : " + subj);
+                    System.out.println("DESCRIPTION : " + desc);
+
+                    while(!decision.equals("y")) {
+                        System.out.print("\n\nConfirm? [y/n] : ");
+                        decision = sc.nextLine();
+
+                        if(decision.equals("n"))
+                            break;
+                        else if(decision.equals("y"))
+                            try {
+                                addComp(subj, desc.toString());
+                            }catch(SQLException e){
+                                printSQLException(e);
+                            }
+                    }
+                }
+
             }
         }
 
 
-    void addComp(String auth, String subj){
+    void addComp(String subj, String desc) throws SQLException{
+        Statement stmt = logman.con.createStatement();
+        try {
+            stmt.execute("SAVEPOINT COMP_INSERTION");
+            String insertion = "INSERT INTO COMPLAINTS (COMP_AUTHOR, COMP_SUBJ, DESCR) VALUES (" + logman.u_id + " ,'" + subj + "' ,'" + desc + "')";
+            stmt.execute(insertion);
+            System.out.println("Successfuly added complaint!");
+            stmt.execute("COMMIT");
 
+        } catch (SQLException e) {
+            stmt.executeQuery("ROLLBACK TO COMP_INSERTION");
+            e.printStackTrace();
+        }
     }
 
     void printQueryResult(String query){
@@ -243,4 +295,24 @@ public class Application {
         System.exit(0);
     }
 
+    public static void clear_console(){
+        try{
+            String operatingSystem = System.getProperty("os.name"); //Check the current operating system
+
+            if(operatingSystem.contains("Windows")){
+                ProcessBuilder pb = new ProcessBuilder("cmd", "/c", "cls");
+                Process startProcess = pb.inheritIO().start();
+                startProcess.waitFor();
+            } else {
+                ProcessBuilder pb = new ProcessBuilder("clear");
+                Process startProcess = pb.inheritIO().start();
+
+                startProcess.waitFor();
+            }
+        }catch(Exception e){
+            System.out.println(e);
+        }
+    }
 }
+
+

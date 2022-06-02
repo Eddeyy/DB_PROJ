@@ -72,7 +72,7 @@ public class LoginManager {
         boolean success = false;
         String[] parse;
 
-        System.out.print("\nEnter your NAME, SURNAME, and ID in a \"N S I\" format: ");
+        System.out.print("Enter your NAME, SURNAME, and ID in a \"N S I\" format: ");
 
         String command = sc.nextLine();
 
