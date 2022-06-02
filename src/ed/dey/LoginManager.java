@@ -40,28 +40,35 @@ public class LoginManager {
             switch(job){
                 case 1:
                     con.close();
-                    con = DriverManager.getConnection(dbURL, "V_OVERSEER", "ovr");
+                    username = "V_OVERSEER";
+                    password = "ovr";
                     break;
                 case 2:
                     con.close();
-                    con = DriverManager.getConnection(dbURL, "ENGINEER", "eng");
+                    username = "ENGINEER";
+                    password = "eng";
                     break;
                 case 3:
                     con.close();
-                    con = DriverManager.getConnection(dbURL, "MANAGER", "mgr");
+                    username = "MANAGER";
+                    password = "mgr";
                     break;
                 case 4:
                     con.close();
-                    con = DriverManager.getConnection(dbURL, "GUARD", "grd");
+                    username = "GUARD";
+                    password = "grd";
                     break;
                 case 6:
                     con.close();
-                    con = DriverManager.getConnection(dbURL, "MEDIC", "mdc");
+                    username = "MEDIC";
+                    password = "mdc";
                     break;
                 default:
                     con.close();
-                    con = DriverManager.getConnection(dbURL, "DWELLER", "dwlr");
+                    username = "DWELLER";
+                    password = "dwlr";
             }
+            con = DriverManager.getConnection(dbURL, username, password);
         }catch(SQLException e)
         {
             e.printStackTrace();

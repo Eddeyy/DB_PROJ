@@ -741,7 +741,6 @@ public class Application {
                             }
                     }
                 }
-
             }
         }
 
@@ -760,6 +759,120 @@ public class Application {
             e.printStackTrace();
         }
     }
+
+    boolean verScreen(){
+        String ver_menu =
+
+                """
+                        ====[VERIFICATION SCREEN]====
+                        Type 'check' followed by [beds/complaints/generators/items/pumps] to list the data.
+                        Type 'verify' or 'deny' followed by the [tablename] and [ID] to modify the data.
+                        Type 'verify all' and [tablename] to verify all the pending data in said table.
+                        
+                        Type 'help' anytime to print this message again.
+                        
+                        
+                        """;
+        String command;
+        String query = "NULL";
+        String[] parse;
+
+        System.out.println(ver_menu);
+
+        while(true){
+            System.out.print("VERIFICATION>");
+            command = sc.nextLine();
+            command = command.toUpperCase();
+
+            if (command.contains("EXIT")) {
+                return false;
+            }
+
+            if(command.equals("HELP"))
+                System.out.println(ver_menu);
+
+            if(command.isEmpty()){
+                System.out.println("Please type something");
+                continue;
+            }
+
+            String tablename;
+            int id;
+
+            parse = command.split(" ", 2);
+
+            if(parse[0].equals("CHECK")){
+                if(parse.length == 2) {
+                    switch(parse[1]) {
+                        case"BEDS":
+                            tablename = "BEDS";
+                            break;
+                        case"COMPLAINTS":
+                            tablename = "COMPLAINTS";
+                            break;
+                        case"GENERATORS":
+                            tablename = "GENERATORS";
+                            break;
+                        case"ITEMS":
+                            tablename = "ITEMS";
+                            break;
+                        case"PUMPS":
+                            tablename = "PUMPS";
+                            break;
+                        default:
+                            continue;
+                    }
+                    query = "SELECT FROM " + tablename + " WHERE VER_STATUS IS NOT 'approved'";
+                }
+                else {
+                    System.out.println("Choose a data to check.");
+                    continue;
+                }
+            }
+
+            if(command.equals("VERIFY ALL"))
+            {
+                query = "UPDATE BEDS, COMPLAINTS, GENERATORS, ITEMS, PUMPS SET VER_STATUS = 'approved' WHERE VER_STATUS IS NOT 'approved'";
+            }
+
+            if(parse[0].equals("VERIFY") && parse.length > 2){
+                    switch(parse[1]) {
+                        case"BEDS":
+                            tablename = "BEDS";
+                            break;
+                        case"COMPLAINTS":
+                            tablename = "COMPLAINTS";
+                            break;
+                        case"GENERATORS":
+                            tablename = "GENERATORS";
+                            break;
+                        case"ITEMS":
+                            tablename = "ITEMS";
+                            break;
+                        case"PUMPS":
+                            tablename = "PUMPS";
+                            break;
+                        default:
+                            continue;
+                    }
+
+                try{
+                    id = Integer.parseInt(parse[2]);
+                }catch(NumberFormatException e) {
+                    System.out.println("Please provide viable id number.");
+                    continue;
+                }
+                    query = "EXECUTE VERIFICATION("+ tablename +" ," + id + " , 'approved')";
+        }
+        try(Statement stmt = logman.con.createStatement()){
+            ResultSet rs = stmt.executeQuery(query);
+            DBTablePrinter.printResultSet(rs);
+
+            System.out.println("SUCCESS!");
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+    }}
 
     void printQueryResult(String query){
         try{
