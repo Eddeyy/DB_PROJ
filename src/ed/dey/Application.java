@@ -8,7 +8,10 @@ public class Application {
     public boolean returning = true;
     public int columnAmount;
     LoginManager logman = new LoginManager();
+    Savepoint savepoint = null;
     Scanner sc = new Scanner(System.in);
+
+
     public static ArrayList<String> columnName = new ArrayList<>();
     public static ArrayList<String>  dataType = new ArrayList<>();
     public static void printSQLException(SQLException ex) {
@@ -908,8 +911,8 @@ public class Application {
                     System.out.println("SUBJECT : " + subj);
                     System.out.println("DESCRIPTION : " + desc);
 
-                    while(!decision.equals("y")) {
-                        System.out.print("\n\nConfirm? [y/n] : ");
+                    do{
+                        System.out.print("\nConfirm? [y/n] : ");
                         decision = sc.nextLine();
 
                         if(decision.equals("n"))
@@ -920,7 +923,7 @@ public class Application {
                             }catch(SQLException e){
                                 printSQLException(e);
                             }
-                    }
+                    }while(!decision.equals("y"));
                 }
 
             }
@@ -930,14 +933,26 @@ public class Application {
     void addComp(String subj, String desc) throws SQLException{
         Statement stmt = logman.con.createStatement();
         try {
-            stmt.execute("SAVEPOINT COMP_INSERTION");
-            String insertion = "INSERT INTO COMPLAINTS (COMP_AUTHOR, COMP_SUBJ, DESCR) VALUES (" + logman.u_id + " ,'" + subj + "' ,'" + desc + "')";
-            stmt.execute(insertion);
+            savepoint = logman.con.setSavepoint();
+            String insertion = "INSERT INTO COMPLAINTS (COMP_AUTHOR, COMP_SUBJ, DESCR) VALUES (?, ?, ?)";
+            PreparedStatement cStmt = logman.con.prepareStatement(insertion);
+            cStmt.setInt(1, logman.u_id);
+            cStmt.setString(2, subj);
+            cStmt.setString(3, desc);
+            cStmt.execute();
             System.out.println("Successfuly added complaint!");
             stmt.execute("COMMIT");
 
         } catch (SQLException e) {
-            stmt.executeQuery("ROLLBACK TO COMP_INSERTION");
+            if(savepoint == null) {
+                logman.con.rollback();
+                System.err.println("Rolled back!");
+            }
+            else {
+                logman.con.rollback(savepoint);
+                logman.con.commit();
+                System.err.println("Rolled back to SP!");
+            }
             e.printStackTrace();
         }
     }

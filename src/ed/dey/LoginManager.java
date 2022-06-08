@@ -32,6 +32,7 @@ public class LoginManager {
     {
         try {
             con = DriverManager.getConnection(dbURL, username, password);
+            con.setAutoCommit(false);
             System.out.println("Connected to Oracle database server as " + username + " successfully");
         }
             catch (SQLException e) {
