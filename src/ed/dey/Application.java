@@ -5,8 +5,8 @@ import java.text.ParseException;
 import java.util.*;
 
 public class Application {
+    private static int columnAmount;
     public boolean returning = true;
-    public int columnAmount;
     LoginManager logman = new LoginManager();
     Scanner sc = new Scanner(System.in);
     public static ArrayList<String> columnName = new ArrayList<>();
@@ -32,7 +32,6 @@ public class Application {
     public void run() {
             while(true){
                 try {
-                    System.out.println();
                     while (logman.login()) {
                             while (displayMenu(logman.con));
                     }
@@ -42,19 +41,73 @@ public class Application {
             }
     }
 
-    public static void findColumns (Connection con, String tableName) throws SQLException{
+    public void insertRow(String tableName) throws SQLException {
+        findColumns(tableName);
+        String query = "INSERT INTO " + tableName + " (";
+        for(int i = 1; i < columnAmount; i++){
+            if(!columnName.get(i).equals("VER_STATUS")) {
+                if (i != 1)
+                    query = query.concat(", " + columnName.get(i));
+                else
+                    query = query.concat(columnName.get(i));
+            }
+            else
+                break;
+        }
+        query +=") VALUES (";
+        for(int i = 1; i < columnAmount; i++){
+            if(!columnName.get(i).equals("VER_STATUS")) {
+                if (i != 1){
+                    System.out.println("Insert " + columnName.get(i) + ":");
+                    Scanner sc = new Scanner(System.in);
+                    String columnValue = sc.nextLine();
+                    if(dataType.get(i).contains("VARCHAR") ) {
+                        query = query.concat(", '" + columnValue + "'");
+                    }
+                    else {
+                        query = query.concat(", " + columnValue);
+                    }
+                }
+                else {
+                    System.out.println("Insert " + columnName.get(i) + ":");
+                    Scanner sc = new Scanner(System.in);
+                    String columnValue = sc.nextLine();
+                    if(dataType.get(i).contains("VARCHAR") ) {
+                        query = query.concat("'" + columnValue + "'");
+                    }
+                    else {
+                        query = query.concat(columnValue);
+                    }
+                }
+
+
+            }
+            else break;
+        }
+        query +=")";
+
+        try (Statement stmt = logman.con.createStatement()) {
+            stmt.executeQuery(query);
+        }
+        catch(SQLException e){
+            printSQLException(e);
+        }
+
+    }
+
+    public void findColumns (String tableName) throws SQLException{
+        columnName.clear();
+        dataType.clear();
         String query =
                 "SELECT column_name, data_type " +
-                        "FROM USER_TAB_COLUMNS " +
-                        "WHERE table_name = '" + tableName.toUpperCase() + "'";
-        int columnAmount = 0;
-        try (Statement stmt = con.createStatement()) {
+                        "FROM ALL_TAB_COLUMNS " +
+                        "WHERE table_name LIKE '" + tableName.toUpperCase() + "'";
+        columnAmount = 0;
+        try (Statement stmt = logman.con.createStatement()) {
             ResultSet rs = stmt.executeQuery(query);
             while (rs.next()){
                 columnName.add(rs.getString("Column_Name".toUpperCase()));
                 dataType.add(rs.getString("Data_Type".toUpperCase()));
-                System.out.println(
-                        columnName.get(columnAmount) + ", " + dataType.get(columnAmount));
                 columnAmount++;
             }
             if(rs.equals(0)) {
@@ -65,8 +118,6 @@ public class Application {
                 printSQLException(e);
             }
     }
-
-
 
     public static void viewTable(Connection con, String tableName) throws SQLException {
         Statement stmt = null;
@@ -142,6 +193,7 @@ public class Application {
         }
         return true;
     }
+
     public boolean displayGuardTableMenu(Connection con) {
         String displayCheck;
         System.out.println("1. ARMORY");
@@ -348,24 +400,26 @@ public class Application {
         return true;
     }
 
-
-    public boolean displayMenu(Connection con){
+    public boolean displayMenu(Connection con) throws SQLException {
         String displayCheck;
         System.out.println("1. Complaints menu");
         System.out.println("2. Display View");
-        System.out.println("3. Other activity");
+        System.out.println("3. Insert");
+        System.out.println("4. Update");
+        if(logman.username.equals("MANAGER") || logman.username.equals("V_OVERSEER") )
+            System.out.println("5. Verification menu");
         System.out.println("(Type 'Logout' or 'Quit' to do accordingly)\n");
         System.out.println("Type the number of the activity that you want to do:");
         Scanner sc = new Scanner(System.in);
         displayCheck = sc.nextLine();
-        displayCheck= displayCheck.toUpperCase();
+        displayCheck = displayCheck.toUpperCase();
         clear_console();
         switch (displayCheck) {
             case "1":
                 compMenu();
                 break;
             case "2":
-                switch (logman.username){
+                switch (logman.username) {
                     case "DWELLER":
                         displayDwellerTableMenu(con);
                         break;
@@ -381,49 +435,110 @@ public class Application {
                     case "MEDIC":
                         displayMedicTableMenu(con);
                         break;
+                    case "V_OVERSEER":
+                        displayManagerTableMenu(con);
+                        break;
                     default:
                         break;
                 }
                 break;
             case "3":
-                //other activity
-                System.out.println("Other activity");
-                System.out.println("Enter table: ");
-                String tableName = sc.nextLine();
-
-                try {
-                    findColumns(con,tableName);
-                } catch (SQLException e) {
-                    printSQLException(e);
+                System.err.println("Where do you want to insert a row?");
+                insertMenu();
+                break;
+            case "4":
+                System.err.println("Where do you want update a row?");
+                updateMenu();
+                break;
+            case "5":
+                if(logman.username.equals("MANAGER") || logman.username.equals("V_OVERSEER") ) {
+                    System.out.println("5. verification menu");
+                    verScreen();
                 }
-
                 break;
             case "LOGOUT":
                 return false;
             case "QUIT":
                 exit_success();
             default:
-                System.err.println("I can't understand you, please retry");
-                System.out.print("\033[H\033[2J");
-                System.out.flush();
-                break;
+                 System.err.println("I can't understand you, please retry");
+                 System.out.print("\033[H\033[2J");
+                 System.out.flush();
+                 break;
         }
-        return true;
-    }
-    public void insertDwellerMenu() {
-        System.out.println("1. ITEMS");
-        System.out.println("0. Exit to Menu");
-    }
-    public void insertEngineerMenu() {
-        System.out.println("1. WATER_PUMPS");
-        System.out.println("2. GENERATORS");
-        System.out.println("3. SECTORS");
+            return true;
     }
 
-    public void insertMedicMenu() {
-        System.out.println("1. BEDS");
+    public void updateRow(String tableName)throws SQLException {
+        findColumns(tableName);
+        DBTablePrinter.printTable(logman.con, tableName);
+        System.out.println("Type which "+ tableName +"_ID you want to update:");
+        Scanner sc = new Scanner(System.in);
+        String idCheck = sc.nextLine();
+        String query = "UPDATE " + tableName + " SET ";
+        for(int i = 1; i < columnAmount; i++) {
+            if(!columnName.get(i).equals("VER_STATUS")) {
+                if (i != 1) {
+                    query = query.concat(", " + columnName.get(i) + " = ");
+                    System.out.println("UPDATE " + columnName.get(i) + ":");
+                    sc = new Scanner(System.in);
+                    String columnValue = sc.nextLine();
+                    if (dataType.get(i).contains("VARCHAR")) {
+                        query = query.concat("'" + columnValue + "'");
+                    } else {
+                        query = query.concat(columnValue);
+                    }
+                }
+                else {
+                    query = query.concat(columnName.get(i) + " = ");
+                    System.out.println("UPDATE " + columnName.get(i) + ":");
+                    sc = new Scanner(System.in);
+                    String columnValue = sc.nextLine();
+                    if (dataType.get(i).contains("VARCHAR")) {
+                        query = query.concat("'" + columnValue + "'");
+                    }
+                    else query = query.concat( columnValue);
+                }
+            }
+            else break;
+        }
+        query +=" WHERE " + columnName.get(0) + " = ";
+        query += idCheck;
+
+        try (Statement stmt = logman.con.createStatement()) {
+            stmt.executeQuery(query);
+        }
+        catch(SQLException e){
+            printSQLException(e);
+        }
     }
-    public void insertManagerMenu() {
+
+    public void updateMenu()throws SQLException {
+        switch (logman.username) {
+            case "DWELLER":
+                System.out.println("You can't update anything");
+                break;
+            case "ENGINEER":
+                updateEngineerMenu(logman.con);
+                break;
+            case "GUARD":
+                updateGuardMenu(logman.con);
+                break;
+            case "MANAGER":
+                updateManagerMenu(logman.con);
+                break;
+            case "MEDIC":
+                System.out.println("You can't update anything");
+                break;
+            case "V_OVERSEER":
+                updateManagerMenu(logman.con);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void updateManagerMenu(Connection con) throws SQLException {
         System.out.println("1. BEDS");
         System.out.println("2. DWELLERS");
         System.out.println("3. EXP_MEMBER_DATA");
@@ -434,9 +549,258 @@ public class Application {
         System.out.println("8. ROOMS");
         System.out.println("9. SECTORS");
         System.out.println("10. WATER_PUMPS");
-    }
-    public void insertMenu(){
+        System.out.println("0. Exit");
+        String updateCheck;
+        Scanner sc = new Scanner(System.in);
+        updateCheck = sc.nextLine();
+        updateCheck = updateCheck.toUpperCase();
+        switch (updateCheck){
+            case "1":
+                updateRow("BEDS");
 
+                break;
+            case "2":
+                updateRow("DWELLERS");
+
+                break;
+            case "3":
+                updateRow("EXP_MEMBER_DATA");
+
+                break;
+            case "4":
+                updateRow("EXPEDITION_LOGS");
+
+                break;
+            case "5":
+                updateRow("GENERATORS");
+
+                break;
+            case "6":
+                updateRow("ITEMS");
+
+                break;
+            case "7":
+                updateRow("JOBS");
+
+                break;
+            case "8":
+                updateRow("ROOMS");
+
+                break;
+            case "9":
+                updateRow("SECTORS");
+
+                break;
+            case "10":
+                updateRow("WATER_PUMPS");
+                break;
+            case "0":
+                break;
+            default:
+                break;
+        }
+
+    }
+
+    private void updateGuardMenu(Connection con) throws SQLException {
+        System.out.println("1. ITEMS");
+        System.out.println("0. Exit to Menu");
+        String updateCheck;
+        Scanner sc = new Scanner(System.in);
+        updateCheck = sc.nextLine();
+        updateCheck = updateCheck.toUpperCase();
+        switch(updateCheck){
+            case "1":
+                updateRow("ITEMS");
+                break;
+            case "0":
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void updateEngineerMenu(Connection con) throws SQLException {
+        System.out.println("1. GENERATORS");
+        System.out.println("2. WATER_PUMPS");
+        System.out.println("0. Exit to Menu");
+        String updateCheck;
+        Scanner sc = new Scanner(System.in);
+        updateCheck = sc.nextLine();
+        updateCheck = updateCheck.toUpperCase();
+        switch(updateCheck){
+            case "1":
+                updateRow("GENERATORS");
+                break;
+            case "2":
+                updateRow("WATER_PUMPS");
+                break;
+            case "0":
+                break;
+            default:
+                break;
+        }
+    }
+
+    public void insertDwellerMenu(Connection con) throws SQLException {
+        System.out.println("1. ITEMS");
+        System.out.println("0. Exit to Menu");
+        String insertCheck;
+        Scanner sc = new Scanner(System.in);
+        insertCheck = sc.nextLine();
+        insertCheck = insertCheck.toUpperCase();
+        switch (insertCheck){
+            case "1":
+                insertRow("ITEMS");
+                break;
+            case "0":
+                break;
+            default:
+                break;
+        }
+    }
+
+    public void insertEngineerMenu(Connection con) throws SQLException {
+        System.out.println("1. ITEMS");
+        System.out.println("2. WATER_PUMPS");
+        System.out.println("3. GENERATORS");
+        System.out.println("4. SECTORS");
+        System.out.println("0. Exit");
+        String insertCheck;
+        Scanner sc = new Scanner(System.in);
+        insertCheck = sc.nextLine();
+        insertCheck = insertCheck.toUpperCase();
+        switch (insertCheck) {
+            case "1":
+                insertRow("ITEMS");
+                break;
+            case "2":
+                insertRow("WATER_PUMPS");
+                break;
+            case "3":
+                insertRow("GENERATORS");
+                break;
+            case "4":
+                insertRow("SECTORS");
+
+                break;
+            case "0":
+                break;
+            default:
+                break;
+        }
+    }
+    public void insertGuardMenu(Connection con) throws SQLException {
+        insertDwellerMenu(con);
+    }
+    public void insertMedicMenu(Connection con) throws SQLException {
+        System.out.println("1. ITEMS");
+        System.out.println("2. BEDS");
+
+        System.out.println("0. Exit");
+            String insertCheck;
+            Scanner sc = new Scanner(System.in);
+            insertCheck = sc.nextLine();
+            insertCheck = insertCheck.toUpperCase();
+            switch (insertCheck){
+                case "1":
+                insertRow("ITEMS");
+                break;
+                case "2":
+                    insertRow("BEDS");
+                    break;
+                case "0":
+                    break;
+                default:
+                    break;
+            }
+    }
+    public void insertManagerMenu(Connection con) throws SQLException {
+        System.out.println("1. BEDS");
+        System.out.println("2. DWELLERS");
+        System.out.println("3. EXP_MEMBER_DATA");
+        System.out.println("4. EXPEDITION_LOGS");
+        System.out.println("5. GENERATORS");
+        System.out.println("6. ITEMS");
+        System.out.println("7. JOBS");
+        System.out.println("8. ROOMS");
+        System.out.println("9. SECTORS");
+        System.out.println("10. WATER_PUMPS");
+        System.out.println("0. Exit");
+        String insertCheck;
+        Scanner sc = new Scanner(System.in);
+        insertCheck = sc.nextLine();
+        insertCheck = insertCheck.toUpperCase();
+        switch (insertCheck){
+            case "1":
+                insertRow("BEDS");
+
+                break;
+            case "2":
+                insertRow("DWELLERS");
+
+                break;
+            case "3":
+                insertRow("EXP_MEMBER_DATA");
+
+                break;
+            case "4":
+                insertRow("EXPEDITION_LOGS");
+
+                break;
+            case "5":
+                insertRow("GENERATORS");
+
+                break;
+            case "6":
+                insertRow("ITEMS");
+
+                break;
+            case "7":
+                insertRow("JOBS");
+
+                break;
+            case "8":
+                insertRow("ROOMS");
+
+                break;
+            case "9":
+                insertRow("SECTORS");
+
+                break;
+            case "10":
+                insertRow("WATER_PUMPS");
+                break;
+            case "0":
+                break;
+            default:
+                break;
+        }
+
+    }
+    public void insertMenu() throws SQLException {
+        switch (logman.username) {
+            case "DWELLER":
+                insertDwellerMenu(logman.con);
+                break;
+            case "ENGINEER":
+                insertEngineerMenu(logman.con);
+                break;
+            case "GUARD":
+                insertGuardMenu(logman.con);
+                break;
+            case "MANAGER":
+                insertManagerMenu(logman.con);
+                break;
+            case "MEDIC":
+                insertMedicMenu(logman.con);
+                break;
+            case "V_OVERSEER":
+                insertManagerMenu(logman.con);
+                break;
+            default:
+                break;
+        }
     }
 
     boolean compMenu(){
@@ -554,7 +918,6 @@ public class Application {
                             }
                     }
                 }
-
             }
         }
 
@@ -573,6 +936,147 @@ public class Application {
             e.printStackTrace();
         }
     }
+
+    boolean verScreen(){
+        String ver_menu =
+
+                """
+                        ====[VERIFICATION SCREEN]====
+                        Type 'check' followed by [beds/complaints/generators/items/pumps] to list the data.
+                        Type 'verify' or 'deny' followed by the [tablename] and [ID/all] to modify the data.
+
+                        Type 'help' anytime to print this message again.
+
+
+                        """;
+        String command;
+        String query = "NULL";
+        String[] parse;
+
+        System.out.println(ver_menu);
+
+        while(true){
+            System.out.print("\nVERIFICATION>");
+            command = sc.nextLine();
+            command = command.toUpperCase();
+
+
+            if (command.contains("EXIT")) {
+                return false;
+            }
+
+            if(command.equals("HELP")) {
+                System.out.println(ver_menu);
+                continue;
+            }
+
+            if(command.isEmpty()){
+                System.out.println("Please type something");
+                continue;
+            }
+
+            String tablename;
+            int id;
+
+            parse = command.split(" ", 3);
+
+            if(parse[0].equals("CHECK")){
+                if(parse.length == 2) {
+                    switch(parse[1]) {
+                        case"BEDS":
+                            tablename = "BEDS";
+                            break;
+                        case"COMPLAINTS":
+                            tablename = "COMPLAINTS";
+                            break;
+                        case"GENERATORS":
+                            tablename = "GENERATORS";
+                            break;
+                        case"ITEMS":
+                            tablename = "ITEMS";
+                            break;
+                        case"PUMPS":
+                            tablename = "WATER_PUMPS";
+                            break;
+                        default:
+                            continue;
+                    }
+                    query = "SELECT * FROM " + tablename + " WHERE VER_STATUS != 'approved'";
+                }
+                else {
+                    System.out.println("Choose data to check.");
+                    continue;
+                }
+            }
+
+
+            if((parse[0].equals("VERIFY") || parse[0].equals("DENY")) && parse.length > 2){
+                    switch(parse[1]) {
+                        case"BEDS":
+                            tablename = "BEDS";
+                            break;
+                        case"COMPLAINTS":
+                            tablename = "COMPLAINTS";
+                            break;
+                        case"GENERATORS":
+                            tablename = "GENERATORS";
+                            break;
+                        case"ITEMS":
+                            tablename = "ITEMS";
+                            break;
+                        case"PUMPS":
+                            tablename = "WATER_PUMPS";
+                            break;
+                        default:
+                            continue;
+                    }
+
+                try {
+                    Statement stmt = logman.con.createStatement();
+                    CallableStatement cStmt = logman.con.prepareCall("{CALL V_OVERSEER.VERIFICATION(?, ?, ?)}");
+
+                    cStmt.setString(1, tablename);
+                    if(parse[0].equals("VERIFY"))
+                        cStmt.setString(3, "approved");
+                    else
+                        cStmt.setString(3, "denied");
+
+                    if(parse[2].equals("ALL")){
+                        cStmt.setInt(2, -2137);
+                    }else
+                        try{
+                            id = Integer.parseInt(parse[2]);
+                            cStmt.setInt(2, id);
+                        }catch(NumberFormatException e) {
+                            System.out.print("Please provide viable id number.");
+                            continue;
+                        }
+
+                    cStmt.executeUpdate();
+
+
+                    System.out.println("SUCCESS!");
+                    continue;
+                } catch (SQLException e) {
+                    if(e.getMessage().contains("ORA-20003"))
+                        System.err.print("Please provide an ID that is contained within the table.\n");
+                    else
+                        e.printStackTrace();
+                }
+            }
+            if(!query.equals("NULL"))
+                try(Statement stmt = logman.con.createStatement()){
+                    ResultSet rs = stmt.executeQuery(query);
+                    DBTablePrinter.printResultSet(rs);
+                    query = "COMMIT";
+                    stmt.execute(query);
+                    System.out.println("SUCCESS!");
+                }catch(SQLException e){
+                    System.out.println(e.getMessage());
+                }
+
+            query = "NULL";
+    }}
 
     void printQueryResult(String query){
         try{

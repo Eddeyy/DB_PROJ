@@ -5,6 +5,7 @@ import java.sql.*;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 public class LoginManager {
     Connection con;
@@ -15,6 +16,15 @@ public class LoginManager {
     String password = "dwlr";
 
     LoginManager(){
+        String welcome =
+                """ 
+                        ]]> VAULT DB v1.0.0
+                        ]]> © W&B VAULTS LLC.
+                        
+                        Welcome to the vault's database system user interface.
+                        
+                        """;
+        System.out.println(welcome);
         establishConnection();
     }
 
@@ -40,28 +50,35 @@ public class LoginManager {
             switch(job){
                 case 1:
                     con.close();
-                    con = DriverManager.getConnection(dbURL, "V_OVERSEER", "ovr");
+                    username = "V_OVERSEER";
+                    password = "ovr";
                     break;
                 case 2:
                     con.close();
-                    con = DriverManager.getConnection(dbURL, "ENGINEER", "eng");
+                    username = "ENGINEER";
+                    password = "eng";
                     break;
                 case 3:
                     con.close();
-                    con = DriverManager.getConnection(dbURL, "MANAGER", "mgr");
+                    username = "MANAGER";
+                    password = "mgr";
                     break;
                 case 4:
                     con.close();
-                    con = DriverManager.getConnection(dbURL, "GUARD", "grd");
+                    username = "GUARD";
+                    password = "grd";
                     break;
                 case 6:
                     con.close();
-                    con = DriverManager.getConnection(dbURL, "MEDIC", "mdc");
+                    username = "MEDIC";
+                    password = "mdc";
                     break;
                 default:
                     con.close();
-                    con = DriverManager.getConnection(dbURL, "DWELLER", "dwlr");
+                    username = "DWELLER";
+                    password = "dwlr";
             }
+            establishConnection();
         }catch(SQLException e)
         {
             e.printStackTrace();
@@ -111,29 +128,34 @@ public class LoginManager {
 
     public boolean checkingName(Connection con, String name, String surname, int id) throws SQLException {
         String query =
-                "SELECT * FROM LOGIN_DWELLERS_LIST WHERE NAME = '"+ name +"' AND SURNAME = '" + surname +"'";
+                "SELECT * FROM V_OVERSEER.LOGIN_DWELLERS_LIST WHERE NAME = '"+ name +"' AND SURNAME = '" + surname +"'";
 
         try (Statement stmt = con.createStatement()) {
             ResultSet rs = stmt.executeQuery(query);
             rs.next();
             int idCheck = rs.getInt("dweller_ID");
-            String nameCheck = rs.getString("name");
+            String nameCheck = rs.getString("NAME");
             String surnameCheck = rs.getString("surname");
-            System.out.println(idCheck + ", " + nameCheck + ", " + surnameCheck);
-            System.out.println(id + ", " + name + ", " + surname);
             if(idCheck == id && nameCheck.equals(name) && surnameCheck.equals(surname)){
-                System.out.println("Brawo debilu");
                 adjustRole();
                 return true;
             }
             else {
-                System.out.println("Jestes chujem");
                 return false;
             }
 
         } catch (SQLException e) {
-            System.out.println("Oops, chuju");
-            Application.printSQLException(e);
+
+            if(e.getErrorCode() == 17289)
+                System.err.println("No such dweller within Vault.");
+            else
+                Application.printSQLException(e);
+
+            try {
+                TimeUnit.MILLISECONDS.sleep(20);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
         }
         return false;
     }
