@@ -5,8 +5,8 @@ import java.text.ParseException;
 import java.util.*;
 
 public class Application {
-    private static int columnAmount;
     public boolean returning = true;
+    public int columnAmount;
     LoginManager logman = new LoginManager();
     Scanner sc = new Scanner(System.in);
     public static ArrayList<String> columnName = new ArrayList<>();
@@ -32,6 +32,7 @@ public class Application {
     public void run() {
             while(true){
                 try {
+                    System.out.println();
                     while (logman.login()) {
                             while (displayMenu(logman.con));
                     }
@@ -108,6 +109,8 @@ public class Application {
             while (rs.next()){
                 columnName.add(rs.getString("Column_Name".toUpperCase()));
                 dataType.add(rs.getString("Data_Type".toUpperCase()));
+                System.out.println(
+                        columnName.get(columnAmount) + ", " + dataType.get(columnAmount));
                 columnAmount++;
             }
             if(rs.equals(0)) {
@@ -118,6 +121,8 @@ public class Application {
                 printSQLException(e);
             }
     }
+
+
 
     public static void viewTable(Connection con, String tableName) throws SQLException {
         Statement stmt = null;
@@ -193,7 +198,6 @@ public class Application {
         }
         return true;
     }
-
     public boolean displayGuardTableMenu(Connection con) {
         String displayCheck;
         System.out.println("1. ARMORY");
@@ -918,6 +922,7 @@ public class Application {
                             }
                     }
                 }
+
             }
         }
 
