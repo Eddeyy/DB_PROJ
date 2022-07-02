@@ -1,4 +1,6 @@
 /out/
 /.idea/
 /src/META-INF/
+/src/META-INF/MANIFEST.MF
+src/ed/dey/Application.java.orig
 /DB_PROJ.iml
